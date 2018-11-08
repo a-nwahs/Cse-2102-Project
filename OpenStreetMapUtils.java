@@ -6,13 +6,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 
 public class OpenStreetMapUtils {
 
-    public final static Logger log = Logger.getLogger("OpenStreeMapUtils");
+    public static Logger LOGGER = Logger.getLogger("OpenStreeMapUtils");
 
     private static OpenStreetMapUtils instance = null;
     private JSONParser jsonParser;
@@ -34,7 +35,8 @@ public class OpenStreetMapUtils {
         final HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         con.setRequestMethod("GET");
-
+        
+        //System.out.println(con.getResponseCode());
         if (con.getResponseCode() != 200) {
             return null;
         }
@@ -47,12 +49,13 @@ public class OpenStreetMapUtils {
             response.append(inputLine);
         }
         in.close();
-
+        System.out.println(response);
         return response.toString();
     }
 
     public Map<String, Double> getCoordinates(String address) {
-        Map<String, Double> res;
+    	//System.out.println(instance);
+    	Map<String, Double> res;
         StringBuffer query;
         String[] split = address.split(" ");
         String queryResult = null;
@@ -60,7 +63,7 @@ public class OpenStreetMapUtils {
         query = new StringBuffer();
         res = new HashMap<String, Double>();
 
-        query.append("http://nominatim.openstreetmap.org/search?q=");
+        query.append("https://nominatim.openstreetmap.org/?format=json&addressdetails=1&q=");
 
         if (split.length == 0) {
             return null;
@@ -72,22 +75,23 @@ public class OpenStreetMapUtils {
                 query.append("+");
             }
         }
-        query.append("&format=json&addressdetails=1");
+        query.append("&format=json&limit=1");
+        
 
-        log.debug("Query:" + query);
+        LOGGER.log(Level.INFO, "Query: " + query);
 
         try {
             queryResult = getRequest(query.toString());
         } catch (Exception e) {
-            log.error("Error when trying to get data with the following query " + query);
+            LOGGER.log(Level.FINE, "Error when trying to get data with the following query " + query);
         }
 
         if (queryResult == null) {
-            return null;
+        	return null;
         }
 
         Object obj = JSONValue.parse(queryResult);
-        log.debug("obj=" + obj);
+        LOGGER.log(Level.FINE, "obj=" + obj);
 
         if (obj instanceof JSONArray) {
             JSONArray array = (JSONArray) obj;
@@ -96,8 +100,8 @@ public class OpenStreetMapUtils {
 
                 String lon = (String) jsonObject.get("lon");
                 String lat = (String) jsonObject.get("lat");
-                log.debug("lon=" + lon);
-                log.debug("lat=" + lat);
+                //LOGGER.log(Level.INFO, "lon=" + lon);
+                //LOGGER.log(Level.INFO, "lat=" + lat);
                 res.put("lon", Double.parseDouble(lon));
                 res.put("lat", Double.parseDouble(lat));
 
