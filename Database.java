@@ -1,24 +1,36 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Database {
-	public ArrayList<String[]> database;
+	public ArrayList<String[]> database;							
+	public Map <String, Integer> converter;							
 
 	public static void main (String[] args) throws IOException {
 		Database db = new Database();
+		System.out.println(db.location("70006"));
+		//db.printer();
+		
 	}
 	
 	public Database () throws IOException { 
-		database = new ArrayList<String[]>();
+		database = new ArrayList<String[]>();						// database sorts the information of each hospital 
+		converter = new HashMap<String, Integer>();					// converter is where all the hospital ids are paired to an index of the ArrayList
+		int index = 0;
 		String file_path = "HospitalGeneralInformation.csv";
 	    File file = new File(file_path);
 	    BufferedReader reader = new BufferedReader(new FileReader(file));
 	    String line;
-	    line = reader.readLine(); // this first line in the file is the header of the excel file
-	   
+	    line = reader.readLine(); 									// this is the first line in the file is the header of the csv file
+	    
 	    while ((line = reader.readLine()) != null) {
-	    	String content[] = line.split(",");
+	    	String content[] = line.split(",");						// each line from the csv file is sorted within an array, which is used to easily access and mutate its elements
+	    	converter.put(content[0], index);						// converter is filled with the hospital ids and their locations in the ArrayList
+	    	index++;
 	    	for (int i = 8; i < content.length; i++) {
 	    		if (content[i].equals("Not Available")) {
 	    			content[i] = "-1";
@@ -81,14 +93,30 @@ public class Database {
 		    		content[i] = "S";
 		    	}
 	    	}
-	    	System.out.println(Arrays.toString(content));
-	    	database.add(content); // print out the contents of a single line
+	    	database.add(content); 								// appends an altered line from the excel sheet into the ArrayList db 
 	    }
-	    /* Implementing Use Case functionality 
-	     	searching by location
-	     		convert the locations to coordinates
-	    */
 	    reader.close();
+	}
+	
+	public void printer() {
+		for (int i = 0; i < database.size(); i++) {
+			for (String str: database.get(i)) {
+				System.out.print(str + " ");
+			}
+			System.out.println();
+		}
+	}
+	
+	public String[] lookup(String id) {							// returns the hospital information that is related to a specific hospital id
+		return database.get(converter.get(id));
+	}
+	
+	public String location(String id) { 
+		String address = "";
+		for (int i = 2; i < 6; i++) {
+			address.concat(" " + database.get(converter.get(id))[i]);
+		}
+		return address;
 	}
 }
 
